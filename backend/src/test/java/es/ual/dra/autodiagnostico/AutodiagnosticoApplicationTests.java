@@ -1,4 +1,4 @@
-package com.reactors.autodiagnostico;
+package es.ual.dra.autodiagnostico;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
