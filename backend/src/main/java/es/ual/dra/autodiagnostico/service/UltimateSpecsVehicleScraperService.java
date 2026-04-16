@@ -42,7 +42,7 @@ public class UltimateSpecsVehicleScraperService {
                                 .timeout(10000)
                                 .get();
 
-                Elements brands = doc.select(".home_brands .col-md-2.col-sm-3.col-xs-4.col-4");
+                Elements brands = doc.select(".home_brands a[href]");
 
                 File outputDir = new File("logos");
                 outputDir.mkdirs();
@@ -130,23 +130,27 @@ public class UltimateSpecsVehicleScraperService {
                                 .timeout(10000)
                                 .get();
 
-                Elements models = doc.select(".home_models_line");
+                Elements models = doc.select(".home_models_line a[href]");
 
-                for (Element model : models) {
+                File outputDir = new File("models");
+                outputDir.mkdirs();
+                for (Element a : models) {
 
-                        Element img = model.selectFirst(".model_image img");
-                        Element title = model.selectFirst(".home_models_over h2");
+                        Element img = a.selectFirst("img");
+                        Element title = a.selectFirst("h2");
 
-                        String modelName = (title != null) ? title.text() : "unknown";
+                        String modelName = title != null ? title.text() : "unknown";
+
                         String imageUrl = "";
-
                         if (img != null) {
-                                imageUrl = img.absUrl("src");
+                                imageUrl = img.attr("abs:src");
+                                if (imageUrl.isEmpty()) {
+                                        imageUrl = "https:" + img.attr("src"); // fallback for // URLs
+                                }
                         }
 
-                        System.out.println("   Model: " + modelName + " -> " + imageUrl);
+                        System.out.println(modelName + " -> " + imageUrl);
 
-                        // Optional: download model image
                         if (!imageUrl.isEmpty()) {
                                 downloadModelImage(imageUrl, brandUrl, modelName);
                         }
