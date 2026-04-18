@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -138,15 +140,17 @@ public class UltimateSpecsVehicleScraperService {
                                 .referrer("https://www.ultimatespecs.com/es")
                                 .timeout(10000)
                                 .get();
-                //Implementar forma de acceder a href="/es/car-specs/Abarth" para expandir la lista de modelos, ya que actualmente solo se muestran 5 modelos por marca y hay marcas con más modelos (ejemplo: Abarth)
+                // Implementar forma de acceder a href="/es/car-specs/Abarth" para expandir la
+                // lista de modelos, ya que actualmente solo se muestran 5 modelos por marca y
+                // hay marcas con más modelos (ejemplo: Abarth)
                 Elements modelBlocks = doc.select("div.home_models_line");
-                
+
                 // Debug: print model blocks count and total versions count
                 int versionsCount = 0;
                 for (Element block : modelBlocks) {
                         versionsCount += block.childrenSize();
                 }
-                
+
                 System.out.println("Found " + versionsCount + " car model versions for brand " + brandUrl);
 
                 File outputDir = new File("models");
@@ -202,7 +206,8 @@ public class UltimateSpecsVehicleScraperService {
                                         versionsList.add(scrapeVersion(versionUrl));
                                 }
                         } else {
-                                Elements versionLinks = modelDoc.select(".versions_div a[href], .table_versions a[href], #versions a[href]");
+                                Elements versionLinks = modelDoc.select(
+                                                ".versions_div a[href], .table_versions a[href], #versions a[href]");
                                 if (!versionLinks.isEmpty()) {
                                         for (Element versionLink : versionLinks) {
                                                 String versionUrl = versionLink.absUrl("href");
@@ -239,7 +244,7 @@ public class UltimateSpecsVehicleScraperService {
                                 downloadModelImage(imageUrl, brandUrl, modelName);
                         }
                         modelsData.add(modelData);
-        
+
                         // Debug mode: only first model
                         break;
                 }
@@ -277,16 +282,64 @@ public class UltimateSpecsVehicleScraperService {
                                 }
 
                                 if (specContainer != null) {
-                                        Elements specsElements = specContainer.select(".fa-dot-circle");
                                         Map<String, String> specsMap = new HashMap<>();
-                                        for (Element specification : specsElements) {
-                                                Element title = specification.selectFirst("b");
-                                                Element value = specification.selectFirst("span");
-                                                if (title != null && value != null) {
-                                                        System.out.println(title.text() + " -> " + value.text());
-                                                        specsMap.put(title.text(), value.text());
+                                        Elements titleElements = specContainer.select("b");
+
+                                        for (Element titleElement : titleElements) {
+                                                String title = titleElement.text().trim();
+                                                if (title.isEmpty()) {
+                                                        continue;
+                                                }
+
+                                                StringBuilder valueBuilder = new StringBuilder();
+                                                for (Node sibling = titleElement
+                                                                .nextSibling(); sibling != null; sibling = sibling
+                                                                                .nextSibling()) {
+                                                        if (sibling instanceof Element siblingElement) {
+                                                                if ("br".equalsIgnoreCase(siblingElement.tagName())) {
+                                                                        break;
+                                                                }
+
+                                                                if ("b".equalsIgnoreCase(siblingElement.tagName())) {
+                                                                        break;
+                                                                }
+
+                                                                if ("i".equalsIgnoreCase(siblingElement.tagName())
+                                                                                && (siblingElement.hasClass(
+                                                                                                "fa-dot-circle")
+                                                                                                || siblingElement
+                                                                                                                .hasClass("fa-dot-circle-o"))) {
+                                                                        break;
+                                                                }
+
+                                                                String text = siblingElement.text().trim();
+                                                                if (!text.isEmpty()) {
+                                                                        if (!valueBuilder.isEmpty()) {
+                                                                                valueBuilder.append(' ');
+                                                                        }
+                                                                        valueBuilder.append(text);
+                                                                }
+                                                                continue;
+                                                        }
+
+                                                        if (sibling instanceof TextNode textNode) {
+                                                                String text = textNode.text().trim();
+                                                                if (!text.isEmpty()) {
+                                                                        if (!valueBuilder.isEmpty()) {
+                                                                                valueBuilder.append(' ');
+                                                                        }
+                                                                        valueBuilder.append(text);
+                                                                }
+                                                        }
+                                                }
+
+                                                String value = valueBuilder.toString().replaceAll("\\s+", " ").trim();
+                                                if (!value.isEmpty()) {
+                                                        System.out.println(title + " -> " + value);
+                                                        specsMap.put(title, value);
                                                 }
                                         }
+
                                         versionData.put("specifications", specsMap);
                                 }
                         }
@@ -294,23 +347,39 @@ public class UltimateSpecsVehicleScraperService {
                         Element table_versions = doc.selectFirst(".table_versions");
 
                         if (table_versions != null) {
-                                Element thead = table_versions.selectFirst("thead");
-                                Elements headers = thead != null ? thead.select("th") : new Elements();
-
-                                Element tbody = table_versions.selectFirst("tbody");
-                                Elements rows = tbody != null ? tbody.select("tr") : new Elements();
-
+                                Elements rows = table_versions.select("tr");
                                 List<Map<String, String>> tableData = new ArrayList<>();
-                                for (Element row : rows) {
-                                        Elements cells = row.select("td");
-                                        Map<String, String> rowData = new HashMap<>();
-                                        for (int i = 0; i < headers.size() && i < cells.size(); i++) {
-                                                System.out.println(
-                                                                headers.get(i).text() + " -> " + cells.get(i).text());
-                                                rowData.put(headers.get(i).text(), cells.get(i).text());
+
+                                if (!rows.isEmpty()) {
+                                        Elements headerCells = rows.get(0).select("th, td");
+                                        List<String> headers = new ArrayList<>();
+                                        for (Element headerCell : headerCells) {
+                                                String headerText = headerCell.text().trim();
+                                                headers.add(headerText.isEmpty() ? "column" + (headers.size() + 1)
+                                                                : headerText);
                                         }
-                                        tableData.add(rowData);
+
+                                        for (int rowIndex = 1; rowIndex < rows.size(); rowIndex++) {
+                                                Elements cells = rows.get(rowIndex).select("td, th");
+                                                if (cells.isEmpty()) {
+                                                        continue;
+                                                }
+
+                                                Map<String, String> rowData = new HashMap<>();
+                                                for (int i = 0; i < cells.size(); i++) {
+                                                        String key = i < headers.size() ? headers.get(i)
+                                                                        : "column" + (i + 1);
+                                                        String value = cells.get(i).text().trim();
+                                                        System.out.println(key + " -> " + value);
+                                                        rowData.put(key, value);
+                                                }
+
+                                                if (!rowData.isEmpty()) {
+                                                        tableData.add(rowData);
+                                                }
+                                        }
                                 }
+
                                 versionData.put("table_versions", tableData);
                         }
 
