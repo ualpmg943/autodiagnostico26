@@ -37,7 +37,13 @@ export const routes: Routes = [
 	] },
 	{ path: 'historial', component: HistorialComponent },
 	{ path: 'contacto', component: ContactoComponent },
-	{ path: 'perfil', component: PerfilComponent },
+	{ path: 'perfil', component: PerfilComponent, canActivate: [authGuard], children: [
+		{ path: '', pathMatch: 'full', redirectTo: 'informacion' },
+		{ path: 'informacion', loadComponent: () => import('./components/perfil/informacion/informacion').then((m) => m.PerfilInformacionComponent) },
+		{ path: 'seguridad', loadComponent: () => import('./components/perfil/seguridad/seguridad').then((m) => m.PerfilSeguridadComponent) },
+		{ path: 'vehiculo', loadComponent: () => import('./components/perfil/vehiculo/vehiculo').then((m) => m.PerfilVehiculoComponent) },
+		{ path: 'notificaciones', loadComponent: () => import('./components/perfil/notificaciones/notificaciones').then((m) => m.PerfilNotificacionesComponent) }
+	] },
 	{ path: 'mis-vehiculos', component: MisVehiculosComponent },
 	{ path: 'login', component: LoginComponent },
 	{ path: 'registro', component: LoginComponent },

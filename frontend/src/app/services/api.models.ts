@@ -69,6 +69,16 @@ export interface VehicleVariant {
   engineType: EngineType | null;
 }
 
+export interface UpdateUserRequest {
+  fullName?: string;
+  email?: string;
+}
+
+export interface UpdatePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
+
 export interface VehicleSearchContext {
   brand: string | null;
   modelId: number | null;
