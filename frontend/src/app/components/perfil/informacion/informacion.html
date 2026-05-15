@@ -1,0 +1,68 @@
+<div class="info-shell">
+  <div class="card info-card">
+    @if (isLoading) {
+      <p class="text-muted">Cargando...</p>
+    } @else if (profile) {
+      <div class="info-header">
+        <img [src]="profile.avatarUrl" [alt]="profile.fullName" class="info-avatar" width="80" height="80"/>
+        <div class="info-header-text">
+          <h2>{{ profile.fullName }}</h2>
+          <span class="badge badge-primary">{{ roleLabel }}</span>
+        </div>
+        <button class="info-edit-btn" (click)="toggleEdit()" [attr.aria-label]="isEditing ? 'Cancelar edición' : 'Editar información'">
+          @if (isEditing) {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          } @else {
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          }
+        </button>
+      </div>
+
+      @if (successMessage) {
+        <div class="alert alert-success mt-md">{{ successMessage }}</div>
+      }
+      @if (errorMessage) {
+        <div class="alert alert-error mt-md">{{ errorMessage }}</div>
+      }
+
+      @if (isEditing) {
+        <div class="info-form">
+          <label class="field">
+            <span class="field-label">Nombre completo</span>
+            <input type="text" [(ngModel)]="editFullName" class="field-input" maxlength="150"/>
+          </label>
+          <label class="field">
+            <span class="field-label">Correo electrónico</span>
+            <input type="email" [(ngModel)]="editEmail" class="field-input" maxlength="180"/>
+          </label>
+          <div class="info-form-actions">
+            <button class="btn btn-primary" (click)="saveChanges()">Guardar cambios</button>
+            <button class="btn btn-secondary" (click)="toggleEdit()">Cancelar</button>
+          </div>
+        </div>
+      } @else {
+        <div class="info-details">
+          <div class="info-row">
+            <span class="info-label">Correo electrónico</span>
+            <span class="info-value">{{ profile.email }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Rol</span>
+            <span class="info-value">{{ roleLabel }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Miembro desde</span>
+            <span class="info-value">{{ createdAtFormatted }}</span>
+          </div>
+        </div>
+      }
+    } @else {
+      <p class="text-muted">No se pudo cargar la información.</p>
+    }
+  </div>
+</div>
