@@ -35,7 +35,10 @@ public class MechanicService {
                 .clientName(client.getFullName())
                 .clientEmail(client.getEmail())
                 .clientAvatar(client.getAvatarUrl())
-                .status(assignment.getStatus())
+                .carInfo("Toyota Corolla 2018")
+                .problemDescription(assignment.getDescription())
+                .status(assignment.getStatus() == null || assignment.getStatus().isBlank() ? "amarillo"
+                        : assignment.getStatus())
                 .latestUpdate(assignment.getLatestUpdate())
                 .sessionUuid(assignment.getSessionUuid())
                 .tallerAssignmentId(assignment.getId())

@@ -9,4 +9,5 @@ public interface UserService {
     AuthUserResponseDTO updateUser(Long id, UpdateUserRequestDTO request);
     void updatePassword(Long id, UpdatePasswordRequestDTO request);
     void deleteUser(Long id);
+    AuthUserResponseDTO updateAvatar(Long id, String avatarUrl);
 }

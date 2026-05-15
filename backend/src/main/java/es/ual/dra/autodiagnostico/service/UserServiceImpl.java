@@ -45,6 +45,14 @@ public class UserServiceImpl implements UserService {
             user.setEmail(email);
         }
 
+        if (request.getCity() != null) {
+            user.setCity(request.getCity().trim());
+        }
+
+        if (request.getPostalCode() != null) {
+            user.setPostalCode(request.getPostalCode().trim());
+        }
+
         return mapToResponse(userRepository.save(user));
     }
 
@@ -69,6 +77,15 @@ public class UserServiceImpl implements UserService {
         userRepository.delete(user);
     }
 
+    @Override
+    public AuthUserResponseDTO updateAvatar(Long id, String avatarUrl) {
+        AppUser user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        user.setAvatarUrl(avatarUrl);
+        return mapToResponse(userRepository.save(user));
+    }
+
     private AuthUserResponseDTO mapToResponse(AppUser user) {
         return AuthUserResponseDTO.builder()
                 .id(user.getId())
@@ -77,6 +94,8 @@ public class UserServiceImpl implements UserService {
                 .role(user.getRole().name())
                 .avatarUrl(user.getAvatarUrl())
                 .createdAt(user.getCreatedAt())
+                .city(user.getCity())
+                .postalCode(user.getPostalCode())
                 .build();
     }
 }
