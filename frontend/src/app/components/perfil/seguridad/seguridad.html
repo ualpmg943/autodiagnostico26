@@ -1,8 +1,8 @@
 <div class="seguridad-shell">
 
-  <div class="card">
-    <h3 class="card-title">Correo electrónico</h3>
-    <p class="card-desc">Correo actual: <strong>{{ emailLabel }}</strong></p>
+  <section class="seguridad-section">
+    <h3 class="section-title">Correo electrónico</h3>
+    <p class="section-desc">Correo actual: <strong>{{ emailLabel }}</strong></p>
 
     @if (emailSuccess) {
       <div class="alert alert-success mt-sm">{{ emailSuccess }}</div>
@@ -18,10 +18,12 @@
       </label>
       <button class="btn btn-primary" (click)="updateEmail()">Actualizar correo</button>
     </div>
-  </div>
+  </section>
 
-  <div class="card mt-lg">
-    <h3 class="card-title">Cambiar contraseña</h3>
+  <hr class="section-divider"/>
+
+  <section class="seguridad-section">
+    <h3 class="section-title">Cambiar contraseña</h3>
 
     @if (passwordSuccess) {
       <div class="alert alert-success mt-sm">{{ passwordSuccess }}</div>
@@ -45,6 +47,6 @@
       </label>
       <button class="btn btn-primary" (click)="updatePassword()">Cambiar contraseña</button>
     </div>
-  </div>
+  </section>
 
 </div>
