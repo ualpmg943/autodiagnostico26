@@ -21,6 +21,8 @@ export interface AuthUserResponse {
   role: AuthUserRole;
   avatarUrl: string;
   createdAt: string;
+  city?: string;
+  postalCode?: string;
 }
 
 export interface ChatJoinResponse {
@@ -72,6 +74,8 @@ export interface VehicleVariant {
 export interface UpdateUserRequest {
   fullName?: string;
   email?: string;
+  city?: string;
+  postalCode?: string;
 }
 
 export interface UpdatePasswordRequest {
