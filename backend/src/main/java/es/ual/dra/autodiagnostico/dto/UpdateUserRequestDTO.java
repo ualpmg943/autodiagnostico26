@@ -21,4 +21,10 @@ public class UpdateUserRequestDTO {
     @Pattern(regexp = "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$", message = "El correo no tiene un formato valido")
     @Size(max = 180, message = "El correo excede el tamano permitido")
     private String email;
+
+    @Size(max = 150, message = "La ciudad excede el tamano permitido")
+    private String city;
+
+    @Size(max = 10, message = "El codigo postal excede el tamano permitido")
+    private String postalCode;
 }

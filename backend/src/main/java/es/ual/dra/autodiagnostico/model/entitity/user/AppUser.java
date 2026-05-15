@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 @Entity
@@ -32,11 +33,18 @@ public class AppUser {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
-    @Column(name = "avatar_url", nullable = false, length = 300)
+    @Lob
+    @Column(name = "avatar_url", nullable = false)
     private String avatarUrl;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Column(length = 150)
+    private String city;
+
+    @Column(name = "postal_code", length = 10)
+    private String postalCode;
 
     public AppUser() {
     }
@@ -95,5 +103,21 @@ public class AppUser {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(String city) {
+        this.city = city;
+    }
+
+    public String getPostalCode() {
+        return postalCode;
+    }
+
+    public void setPostalCode(String postalCode) {
+        this.postalCode = postalCode;
     }
 }
