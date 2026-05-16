@@ -13,18 +13,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
-import jakarta.persistence.ManyToMany;
-
-/**
- * Entidad que representa un producto asociado a un vehículo.
- */
 @Entity
 @Table(name = "product")
 @Getter
 @Setter
-@ToString(exclude = "vehicleModels")
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -35,21 +28,14 @@ public class Product {
     private Long idProduct;
 
     @NotNull
-    // Nombre del producto
     private String name;
 
     @NotNull
-    // Descripción del producto
     private String description;
 
-    // Precio del producto
-    private Double lowRangePrice; // Puede ser nulo
+    private Double lowRangePrice;
 
-    private Double highRangePrice; // Puede ser nulo
+    private Double highRangePrice;
 
-    private String image; // Puede ser nulo
-
-    @ManyToMany(mappedBy = "products")
-    @Builder.Default
-    private List<VehicleModel> vehicleModels = new ArrayList<>();
+    private String image;
 }
