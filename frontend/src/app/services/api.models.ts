@@ -124,3 +124,31 @@ export interface VehicleSearchContext {
   transmission: TransmissionType | null;
   year: number | null;
 }
+
+// ── Autodiagnóstico (IA) ───────────────────────────────────────────────────
+
+export interface AutodiagnosisRequest {
+  vehicleModelId: number;
+  symptoms: string[];
+  freeText: string;
+  year: number | null;
+  engineType: EngineType | null;
+  transmission: TransmissionType | null;
+}
+
+export interface DiagnosedPart {
+  idProduct: number;
+  name: string;
+  description: string;
+  lowRangePrice: number | null;
+  highRangePrice: number | null;
+  image: string | null;
+}
+
+export interface AutodiagnosisResponse {
+  diagnosis: string;
+  confidence: number;
+  explanation: string;
+  suggestedParts: DiagnosedPart[];
+  unresolvedPartNames: string[];
+}
