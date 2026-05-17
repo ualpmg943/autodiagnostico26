@@ -18,7 +18,7 @@ public class PersonalVehicle {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idPersonalVehicle;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "idVehicleModel")
@@ -29,6 +29,10 @@ public class PersonalVehicle {
     private AppUser owner;
 
     private LocalDate buildDate;
-    private String VIN;
+
+    @Column(name = "vin", length = 32)
+    private String vin;
+
+    @Column(length = 16)
     private String plate;
 }
