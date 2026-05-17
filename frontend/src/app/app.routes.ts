@@ -17,6 +17,7 @@ import { authGuard } from './auth/auth.guard';
 import { Privacidad } from './components/privacidad/privacidad';
 import { Terminos } from './components/terminos/terminos';
 import { Faq } from './components/faq/faq';
+import { RegistroTallerComponent } from './components/registro-taller/registro-taller';
 
 export const routes: Routes = [
 	{ path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -48,6 +49,7 @@ export const routes: Routes = [
 	{ path: 'privacidad', component: Privacidad },
 	{ path: 'terminos', component: Terminos },
 	{ path: 'faq', component: Faq },
+	{ path: 'registro-taller', component: RegistroTallerComponent },
 
 	{ path: '**', redirectTo: 'login' }
 ];

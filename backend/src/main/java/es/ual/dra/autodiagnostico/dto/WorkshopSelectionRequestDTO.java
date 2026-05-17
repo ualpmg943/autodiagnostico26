@@ -8,4 +8,6 @@ import lombok.Setter;
 public class WorkshopSelectionRequestDTO {
 
     private Long clientId;
+    private Long personalVehicleId;
+    private String description;
 }

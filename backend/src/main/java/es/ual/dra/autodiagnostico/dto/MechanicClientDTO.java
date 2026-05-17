@@ -21,15 +21,15 @@ public class MechanicClientDTO {
 
     private String clientAvatar;
 
-    private String carInfo; // Example: "Toyota Corolla 2018"
+    private String carInfo;
 
     private String problemDescription;
 
-    private String status; // verde, amarillo, naranja, rojo
+    private String status;
 
     private String latestUpdate;
 
     private String sessionUuid;
 
-    private Long tallerAssignmentId;
+    private Long issueId;
 }

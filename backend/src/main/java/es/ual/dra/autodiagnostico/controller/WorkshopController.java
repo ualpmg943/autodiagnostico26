@@ -40,6 +40,6 @@ public class WorkshopController {
     public ResponseEntity<WorkshopSelectionResponseDTO> selectWorkshop(
             @PathVariable Long workshopId,
             @RequestBody WorkshopSelectionRequestDTO request) {
-        return ResponseEntity.ok(workshopService.selectWorkshop(workshopId, request.getClientId()));
+        return ResponseEntity.ok(workshopService.selectWorkshop(workshopId, request));
     }
 }
