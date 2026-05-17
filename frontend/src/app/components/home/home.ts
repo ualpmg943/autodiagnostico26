@@ -1,5 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { IntroducirVehiculo } from '../introducir-vehiculo/introducir-vehiculo';
 import { SeleccionaProblema, ProblemaSeleccion } from '../selecciona-problema/selecciona-problema';
 import { VehicleSearchContext, PersonalVehicleResponse } from '../../services/api.models';
@@ -15,6 +17,9 @@ import { PersonalVehicleApiService } from '../../services/personal-vehicle-api.s
 })
 export class HomeComponent {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly auth = inject(AuthStateService);
+  private readonly personalVehicleApi = inject(PersonalVehicleApiService);
 
   vehicleContext: VehicleSearchContext | null = null;
   seleccion: ProblemaSeleccion = { problemas: [], descripcionLibre: '' };
