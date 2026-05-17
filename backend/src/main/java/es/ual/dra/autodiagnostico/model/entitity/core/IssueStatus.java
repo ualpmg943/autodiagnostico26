@@ -1,6 +1,7 @@
 package es.ual.dra.autodiagnostico.model.entitity.core;
 
 public enum IssueStatus {
+    DRAFT,
     WORKSHOP_ASSIGNED,
     BUDGET_ACCEPTED,
     IN_PROGRESS,

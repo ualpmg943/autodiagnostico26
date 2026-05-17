@@ -2,7 +2,6 @@ package es.ual.dra.autodiagnostico.model.entitity.core;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import es.ual.dra.autodiagnostico.model.entitity.user.AppUser;
 import jakarta.persistence.Column;
@@ -45,12 +44,21 @@ public class Issue {
     @JoinColumn(name = "personal_vehicle_id", nullable = false)
     private PersonalVehicle personalVehicle;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "workshop_id", nullable = false)
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "workshop_id")
     private Workshop workshop;
 
     @Column(name = "description", length = 500)
     private String description;
+
+    @Column(name = "ai_diagnosis", length = 1500)
+    private String aiDiagnosis;
+
+    @Column(name = "recommended_parts", length = 3000)
+    private String recommendedParts;
+
+    @Column(name = "estimated_price", precision = 12, scale = 2)
+    private BigDecimal estimatedPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
@@ -71,7 +79,7 @@ public class Issue {
     @Column(name = "active", nullable = false)
     private boolean active;
 
-    @Column(name = "session_uuid", nullable = false, length = 36)
+    @Column(name = "session_uuid", length = 36)
     private String sessionUuid;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -87,14 +95,14 @@ public class Issue {
     @PrePersist
     public void onCreate() {
         LocalDateTime now = LocalDateTime.now();
-        if (sessionUuid == null || sessionUuid.isBlank()) {
-            sessionUuid = UUID.randomUUID().toString();
-        }
         if (status == null) {
-            status = IssueStatus.WORKSHOP_ASSIGNED;
+            status = IssueStatus.DRAFT;
         }
         if (progressColor == null || progressColor.isBlank()) {
             progressColor = "amarillo";
+        }
+        if (!active) {
+            active = true;
         }
         createdAt = now;
         updatedAt = now;
