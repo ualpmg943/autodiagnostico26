@@ -1,21 +1,72 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { IntroducirVehiculo } from '../introducir-vehiculo/introducir-vehiculo';
 import { SeleccionaProblema, ProblemaSeleccion } from '../selecciona-problema/selecciona-problema';
-import { VehicleSearchContext } from '../../services/api.models';
+import { VehicleSearchContext, PersonalVehicleResponse } from '../../services/api.models';
+import { AuthStateService } from '../../services/auth-state.service';
+import { PersonalVehicleApiService } from '../../services/personal-vehicle-api.service';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [IntroducirVehiculo, SeleccionaProblema],
+  imports: [CommonModule, FormsModule, IntroducirVehiculo, SeleccionaProblema],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
+  private readonly auth = inject(AuthStateService);
+  private readonly personalVehicleApi = inject(PersonalVehicleApiService);
+  private readonly route = inject(ActivatedRoute);
+
   vehicleContext: VehicleSearchContext | null = null;
   seleccion: ProblemaSeleccion = { problemas: [], descripcionLibre: '' };
 
+  personalVehicles: PersonalVehicleResponse[] = [];
+  selectedPersonalVehicleId: number | null = null;
+  prefillContext: VehicleSearchContext | null = null;
+
   get tieneProblema(): boolean {
     return this.seleccion.problemas.length > 0 || !!this.seleccion.descripcionLibre.trim();
+  }
+
+  get isLoggedIn(): boolean {
+    return this.auth.isLoggedIn();
+  }
+
+  ngOnInit(): void {
+    if (!this.isLoggedIn) {
+      return;
+    }
+    const ownerId = this.auth.userId();
+    if (ownerId === null) {
+      return;
+    }
+
+    const paramId = this.route.snapshot.queryParamMap.get('personalVehicleId');
+    const preselectId = paramId ? Number(paramId) : null;
+
+    this.personalVehicleApi.listByOwner(ownerId).subscribe({
+      next: (vehicles: PersonalVehicleResponse[]) => {
+        this.personalVehicles = vehicles;
+        if (preselectId && vehicles.some(v => v.id === preselectId)) {
+          this.applyPersonalVehicle(preselectId);
+        }
+      },
+      error: () => {
+        // silencioso: el usuario puede seguir introduciendo a mano
+      },
+    });
+  }
+
+  onPersonalVehicleSelect(id: number | null): void {
+    this.selectedPersonalVehicleId = id;
+    if (id === null) {
+      this.prefillContext = null;
+      return;
+    }
+    this.applyPersonalVehicle(id);
   }
 
   onVehicleContextChange(ctx: VehicleSearchContext): void {
@@ -29,5 +80,26 @@ export class HomeComponent {
   onEnviar(): void {
     // TODO: navegar a la pantalla de diagnóstico
     console.log('Enviar', this.seleccion, this.vehicleContext);
+  }
+
+  displayName(v: PersonalVehicleResponse): string {
+    const parts = [v.brand, v.vehicleName, v.modelName].filter(Boolean);
+    return parts.length > 0 ? parts.join(' ') : `Vehículo #${v.id}`;
+  }
+
+  private applyPersonalVehicle(id: number): void {
+    const vehicle = this.personalVehicles.find(v => v.id === id);
+    if (!vehicle) return;
+    this.selectedPersonalVehicleId = id;
+    this.prefillContext = {
+      brand: vehicle.brand,
+      modelId: null,
+      modelName: vehicle.vehicleName,
+      variantId: vehicle.vehicleModelId,
+      variantName: vehicle.modelName,
+      engineType: vehicle.engineType,
+      transmission: vehicle.transmission,
+      year: vehicle.year,
+    };
   }
 }

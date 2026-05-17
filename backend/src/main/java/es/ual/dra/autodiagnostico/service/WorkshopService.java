@@ -1,8 +1,6 @@
 package es.ual.dra.autodiagnostico.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,12 +10,16 @@ import org.springframework.web.server.ResponseStatusException;
 import es.ual.dra.autodiagnostico.dto.MechanicClientDTO;
 import es.ual.dra.autodiagnostico.dto.RepairVehicleMockDTO;
 import es.ual.dra.autodiagnostico.dto.WorkshopDTO;
+import es.ual.dra.autodiagnostico.dto.WorkshopSelectionRequestDTO;
 import es.ual.dra.autodiagnostico.dto.WorkshopSelectionResponseDTO;
-import es.ual.dra.autodiagnostico.model.entitity.chat.TallerAssignment;
+import es.ual.dra.autodiagnostico.model.entitity.core.Issue;
+import es.ual.dra.autodiagnostico.model.entitity.core.IssueStatus;
+import es.ual.dra.autodiagnostico.model.entitity.core.PersonalVehicle;
 import es.ual.dra.autodiagnostico.model.entitity.core.Workshop;
 import es.ual.dra.autodiagnostico.model.entitity.user.AppUser;
 import es.ual.dra.autodiagnostico.model.entitity.user.UserRole;
-import es.ual.dra.autodiagnostico.repository.TallerAssignmentRepository;
+import es.ual.dra.autodiagnostico.repository.IssueRepository;
+import es.ual.dra.autodiagnostico.repository.PersonalVehicleRepository;
 import es.ual.dra.autodiagnostico.repository.UserRepository;
 import es.ual.dra.autodiagnostico.repository.WorkshopRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +29,9 @@ import lombok.RequiredArgsConstructor;
 public class WorkshopService {
 
     private final WorkshopRepository workshopRepository;
-    private final TallerAssignmentRepository tallerAssignmentRepository;
+    private final IssueRepository issueRepository;
     private final UserRepository userRepository;
+    private final PersonalVehicleRepository personalVehicleRepository;
 
     @Transactional(readOnly = true)
     public List<WorkshopDTO> listWorkshops(Long clientId) {
@@ -44,58 +47,61 @@ public class WorkshopService {
     }
 
     @Transactional
-    public WorkshopSelectionResponseDTO selectWorkshop(Long workshopId, Long clientId) {
-        if (clientId == null) {
+    public WorkshopSelectionResponseDTO selectWorkshop(Long workshopId, WorkshopSelectionRequestDTO request) {
+        if (request == null || request.getClientId() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "clientId es obligatorio");
+        }
+        if (request.getPersonalVehicleId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "personalVehicleId es obligatorio");
         }
 
         Workshop workshop = getWorkshopOrThrow(workshopId);
-        AppUser client = userRepository.findById(clientId)
+        AppUser client = userRepository.findById(request.getClientId())
                 .filter(user -> user.getRole() == UserRole.USER)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cliente no encontrado"));
 
+        PersonalVehicle personalVehicle = personalVehicleRepository.findById(request.getPersonalVehicleId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehiculo no encontrado"));
+
+        if (personalVehicle.getOwner() == null || !personalVehicle.getOwner().getId().equals(client.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "El vehiculo no pertenece al cliente");
+        }
+
         AppUser mechanic = getMechanic(workshop);
-        List<TallerAssignment> currentClientAssignments = tallerAssignmentRepository.findByClientIdAndActiveTrue(clientId);
-        TallerAssignment existingForWorkshop = currentClientAssignments.stream()
-                .filter(assignment -> assignment.getTallerId().equals(mechanic.getId()))
-                .findFirst()
+
+        Issue existing = issueRepository
+                .findByWorkshopMechanicIdAndPersonalVehicleOwnerIdAndActiveTrue(mechanic.getId(), client.getId())
                 .orElse(null);
 
-        TallerAssignment assignment;
-        if (existingForWorkshop != null) {
-            assignment = existingForWorkshop;
+        Issue issue;
+        if (existing != null) {
+            issue = existing;
         } else {
-            long activeVehicles = tallerAssignmentRepository.countByTallerIdAndActiveTrue(mechanic.getId());
-            if (activeVehicles >= workshop.getVehicleLimit()) {
+            long activeIssues = issueRepository.countByWorkshopMechanicIdAndActiveTrue(mechanic.getId());
+            if (activeIssues >= workshop.getVehicleLimit()) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "El taller ha alcanzado su capacidad maxima");
             }
 
-            LocalDateTime now = LocalDateTime.now();
-            for (TallerAssignment current : currentClientAssignments) {
+            for (Issue current : issueRepository.findByPersonalVehicleOwnerIdAndActiveTrue(client.getId())) {
                 current.setActive(false);
-                current.setUpdatedAt(now);
-            }
-            if (!currentClientAssignments.isEmpty()) {
-                tallerAssignmentRepository.saveAll(currentClientAssignments);
             }
 
-            assignment = TallerAssignment.builder()
-                    .tallerId(mechanic.getId())
-                    .clientId(client.getId())
-                    .sessionUuid(UUID.randomUUID().toString())
-                    .active(true)
-                    .description("Seleccion de taller por el cliente")
-                    .status("amarillo")
+            issue = Issue.builder()
+                    .personalVehicle(personalVehicle)
+                    .workshop(workshop)
+                    .description(request.getDescription() == null ? "Seleccion de taller por el cliente"
+                            : request.getDescription())
+                    .status(IssueStatus.WORKSHOP_ASSIGNED)
+                    .progressColor("amarillo")
                     .latestUpdate("Taller seleccionado. Pendiente de primera revision del mecanico.")
-                    .createdAt(now)
-                    .updatedAt(now)
+                    .active(true)
                     .build();
-            assignment = tallerAssignmentRepository.save(assignment);
+            issue = issueRepository.save(issue);
         }
 
         return WorkshopSelectionResponseDTO.builder()
-                .workshop(toDto(workshop, clientId))
-                .tracking(toTrackingDto(assignment, client))
+                .workshop(toDto(workshop, client.getId()))
+                .tracking(toTrackingDto(issue, client))
                 .build();
     }
 
@@ -112,8 +118,8 @@ public class WorkshopService {
 
     private WorkshopDTO toDto(Workshop workshop, Long clientId) {
         AppUser mechanic = getMechanic(workshop);
-        TallerAssignment activeClientAssignment = findClientAssignmentForWorkshop(workshop, clientId);
-        long activeVehicles = tallerAssignmentRepository.countByTallerIdAndActiveTrue(mechanic.getId());
+        Issue activeClientIssue = findClientIssueForWorkshop(workshop, clientId);
+        long activeVehicles = issueRepository.countByWorkshopMechanicIdAndActiveTrue(mechanic.getId());
 
         return WorkshopDTO.builder()
                 .id(workshop.getId())
@@ -130,47 +136,51 @@ public class WorkshopService {
                 .mechanicAvatar(mechanic.getAvatarUrl())
                 .latitude(workshop.getLatitude())
                 .longitude(workshop.getLongitude())
-                .selectedByClient(activeClientAssignment != null)
-                .sessionUuid(activeClientAssignment == null ? null : activeClientAssignment.getSessionUuid())
-                .vehiclesInRepair(buildVehicleMocks(activeClientAssignment))
+                .selectedByClient(activeClientIssue != null)
+                .sessionUuid(activeClientIssue == null ? null : activeClientIssue.getSessionUuid())
+                .vehiclesInRepair(buildVehicleMocks(activeClientIssue))
                 .build();
     }
 
-    private TallerAssignment findClientAssignmentForWorkshop(Workshop workshop, Long clientId) {
+    private Issue findClientIssueForWorkshop(Workshop workshop, Long clientId) {
         if (clientId == null) {
             return null;
         }
-
-        return tallerAssignmentRepository.findByTallerIdAndClientIdAndActiveTrue(workshop.getMechanicId(), clientId)
+        return issueRepository
+                .findByWorkshopMechanicIdAndPersonalVehicleOwnerIdAndActiveTrue(workshop.getMechanicId(), clientId)
                 .orElse(null);
     }
 
-    private List<RepairVehicleMockDTO> buildVehicleMocks(TallerAssignment assignment) {
-        if (assignment == null) {
+    private List<RepairVehicleMockDTO> buildVehicleMocks(Issue issue) {
+        if (issue == null) {
             return List.of();
         }
-
+        PersonalVehicle pv = issue.getPersonalVehicle();
+        String displayName = pv != null && pv.getVehicleModel() != null && pv.getVehicleModel().getVehicle() != null
+                ? (pv.getVehicleModel().getVehicle().getBrand() + " "
+                        + pv.getVehicleModel().getVehicle().getName())
+                : "Vehiculo";
         return List.of(
                 RepairVehicleMockDTO.builder()
-                        .id(assignment.getId())
-                        .name("Toyota Corolla 2018")
-                        .plate("0000-MCK")
-                        .status(assignment.getStatus())
+                        .id(issue.getId())
+                        .name(displayName)
+                        .plate(pv == null ? null : pv.getPlate())
+                        .status(issue.getProgressColor())
                         .build());
     }
 
-    private MechanicClientDTO toTrackingDto(TallerAssignment assignment, AppUser client) {
+    private MechanicClientDTO toTrackingDto(Issue issue, AppUser client) {
         return MechanicClientDTO.builder()
                 .clientId(client.getId())
                 .clientName(client.getFullName())
                 .clientEmail(client.getEmail())
                 .clientAvatar(client.getAvatarUrl())
-                .carInfo("Toyota Corolla 2018")
-                .problemDescription(assignment.getDescription())
-                .status(assignment.getStatus())
-                .latestUpdate(assignment.getLatestUpdate())
-                .sessionUuid(assignment.getSessionUuid())
-                .tallerAssignmentId(assignment.getId())
+                .carInfo(null)
+                .problemDescription(issue.getDescription())
+                .status(issue.getProgressColor())
+                .latestUpdate(issue.getLatestUpdate())
+                .sessionUuid(issue.getSessionUuid())
+                .issueId(issue.getId())
                 .build();
     }
 }

@@ -124,3 +124,28 @@ export interface VehicleSearchContext {
   transmission: TransmissionType | null;
   year: number | null;
 }
+
+// ── PersonalVehicle ────────────────────────────────────────────────────────
+
+export interface CreatePersonalVehicleRequest {
+  ownerId: number;
+  vehicleModelId: number;
+  plate?: string | null;
+  vin?: string | null;
+  buildDate?: string | null;
+}
+
+export interface PersonalVehicleResponse {
+  id: number;
+  ownerId: number;
+  vehicleModelId: number;
+  brand: string | null;
+  vehicleName: string | null;
+  modelName: string | null;
+  year: number | null;
+  engineType: EngineType | null;
+  transmission: TransmissionType | null;
+  plate: string | null;
+  vin: string | null;
+  buildDate: string | null;
+}
