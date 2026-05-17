@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { IntroducirVehiculo } from '../introducir-vehiculo/introducir-vehiculo';
 import { SeleccionaProblema, ProblemaSeleccion } from '../selecciona-problema/selecciona-problema';
 import { VehicleSearchContext } from '../../services/api.models';
@@ -11,6 +12,8 @@ import { VehicleSearchContext } from '../../services/api.models';
   styleUrl: './home.css',
 })
 export class HomeComponent {
+  private readonly router = inject(Router);
+
   vehicleContext: VehicleSearchContext | null = null;
   seleccion: ProblemaSeleccion = { problemas: [], descripcionLibre: '' };
 
@@ -27,7 +30,11 @@ export class HomeComponent {
   }
 
   onEnviar(): void {
-    // TODO: navegar a la pantalla de diagnóstico
-    console.log('Enviar', this.seleccion, this.vehicleContext);
+    this.router.navigate(['/diagnostico'], {
+      state: {
+        vehicle: this.vehicleContext,
+        problemas: this.seleccion,
+      },
+    });
   }
 }
