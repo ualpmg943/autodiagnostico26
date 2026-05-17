@@ -22,7 +22,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/autodiagnostico?createDatabaseIfNotExist=true
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
-      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create-drop
     volumes:
       - ./backend/src/main/resources/scraper-output:/app/scraper-output
       - ./backend/src/main/resources/logos:/app/logos
