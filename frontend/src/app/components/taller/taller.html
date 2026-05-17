@@ -2,9 +2,9 @@
   <header class="workshop-heading">
     <div>
       <p class="eyebrow">Talleres</p>
-      <h1>Elige el taller para tu seguimiento</h1>
+      <h2>Elige el taller para tu seguimiento</h2>
       <p>
-        Consulta talleres disponibles, ocupacion y el mecanico asignado antes de abrir la sesion de seguimiento.
+        Consulta talleres disponibles, ocupacion y mucho más en nuestro mapa.
       </p>
     </div>
     <button type="button" class="refresh-button" (click)="loadWorkshops()" [disabled]="loading()">
@@ -109,10 +109,10 @@
           </p>
         </section>
 
-        <div class="map-placeholder">
-          <span>Mapa pendiente</span>
-          <small>{{ workshop.latitude }}, {{ workshop.longitude }}</small>
-        </div>
+        <app-map
+          [workshops]="workshops()"
+          (workshopSelected)="selectPreview($event)"
+        ></app-map>
 
         <div class="actions">
           <button

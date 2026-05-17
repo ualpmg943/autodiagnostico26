@@ -352,6 +352,11 @@ button:disabled {
   font-weight: 800;
 }
 
+app-map {
+  display: block;
+  margin-bottom: 28px;
+}
+
 .actions {
   display: flex;
   align-items: center;

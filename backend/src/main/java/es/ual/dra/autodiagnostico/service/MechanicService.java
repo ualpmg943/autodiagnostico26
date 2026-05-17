@@ -26,7 +26,11 @@ public class MechanicService {
 
         TallerAssignment assignment = tallerAssignmentRepository
                 .findFirstByClientIdAndActiveTrue(clientId)
-                .orElseThrow(() -> new ResponseStatusException(   HttpStatus.NOT_FOUND,"Tracking no encontrado"));
+                .orElse(null);
+
+        if (assignment == null) {
+        return null;        }
+
         AppUser client = userRepository.findById(clientId)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
 
