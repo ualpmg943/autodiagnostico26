@@ -127,6 +127,14 @@ public class ChatServiceImpl implements ChatService {
         AppUser participant = resolveParticipant(dto.getParticipantId());
         ChatSenderRole senderRole = ChatSenderRole.from(dto.getSenderRole());
 
+        String normalizedSessionUuid = issue.getSessionUuid() == null ? "" : issue.getSessionUuid().trim();
+        if (normalizedSessionUuid.isEmpty()) {
+            throw new IllegalArgumentException("El expediente no tiene UUID de sesion asignado");
+        }
+        if (!normalizedSessionUuid.equals(dto.getSessionUuid().trim())) {
+            throw new IllegalArgumentException("La sesion del mensaje no coincide con el expediente");
+        }
+
         ensureParticipantInRoom(issue.getId(), participant.getId());
 
         if (!chatMessageRepository.existsByIssueId(issue.getId()) && senderRole != ChatSenderRole.MECANICO) {
@@ -146,6 +154,7 @@ public class ChatServiceImpl implements ChatService {
         ChatMessage saved = chatMessageRepository.save(
                 ChatMessage.builder()
                         .issue(issue)
+                    .sessionUuid(normalizedSessionUuid)
                         .sender(participant)
                         .senderRole(senderRole)
                         .commentText(normalizedComment)

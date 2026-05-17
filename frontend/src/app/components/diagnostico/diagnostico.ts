@@ -12,6 +12,8 @@ import { ProblemaSeleccion } from '../selecciona-problema/selecciona-problema';
 interface DiagnosticoNavState {
   vehicle: VehicleSearchContext | null;
   problemas: ProblemaSeleccion | null;
+  clientId: number | null;
+  personalVehicleId: number | null;
 }
 
 @Component({
@@ -20,6 +22,12 @@ interface DiagnosticoNavState {
   imports: [CommonModule],
   template: `
     <section class="diagnostico-page">
+      @if (successMessage()) {
+        <div class="estado estado--success" role="status" aria-live="polite">
+          <p>{{ successMessage() }}</p>
+        </div>
+      }
+
       @if (loading()) {
         <div class="estado estado--loading">
           <p>Analizando síntomas con el asistente IA…</p>
@@ -93,6 +101,10 @@ interface DiagnosticoNavState {
         <button type="button" class="boton-volver" (click)="volverAHome()">
           Hacer otro diagnóstico
         </button>
+
+        <button type="button" class="boton-aceptar" (click)="aceptarDiagnostico()" [disabled]="savingIssue()">
+          {{ savingIssue() ? 'Guardando diagnóstico...' : 'Aceptar diagnóstico y elegir taller' }}
+        </button>
       }
     </section>
   `,
@@ -106,6 +118,14 @@ interface DiagnosticoNavState {
       }
       .estado { padding: 2rem; text-align: center; }
       .estado--error { color: #b00020; }
+      .estado--success {
+        color: #1f5e24;
+        background: #e8f5e9;
+        border: 1px solid #a5d6a7;
+        border-radius: 0.4rem;
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+      }
       .cabecera h1 { margin: 0 0 0.5rem; }
       .diagnosis { font-size: 1.15rem; font-weight: 600; margin: 0 0 1rem; }
       .confidence {
@@ -140,6 +160,13 @@ interface DiagnosticoNavState {
         cursor: pointer; font-size: 1rem;
       }
       .boton-volver:hover { background: #0d47a1; }
+      .boton-aceptar {
+        margin-top: 0.75rem; margin-left: 0.75rem; padding: 0.6rem 1.2rem;
+        background: #2e7d32; color: white; border: none; border-radius: 0.3rem;
+        cursor: pointer; font-size: 1rem;
+      }
+      .boton-aceptar:hover { background: #1f5e24; }
+      .boton-aceptar:disabled { opacity: 0.7; cursor: not-allowed; }
     `,
   ],
 })
@@ -148,10 +175,13 @@ export class DiagnosticoComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly loading = signal<boolean>(false);
+  readonly savingIssue = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly successMessage = signal<string | null>(null);
   readonly resultado = signal<AutodiagnosisResponse | null>(null);
 
   private navState: DiagnosticoNavState | null = null;
+  private payload: AutodiagnosisRequest | null = null;
 
   constructor() {
     const nav = this.router.getCurrentNavigation();
@@ -182,7 +212,14 @@ export class DiagnosticoComponent implements OnInit {
       return;
     }
 
+    if (state.clientId == null || state.personalVehicleId == null) {
+      this.errorMessage.set('No se pudo resolver el cliente o el vehículo seleccionado.');
+      return;
+    }
+
     const payload: AutodiagnosisRequest = {
+      clientId: state.clientId,
+      personalVehicleId: state.personalVehicleId,
       vehicleModelId,
       symptoms,
       freeText,
@@ -190,6 +227,8 @@ export class DiagnosticoComponent implements OnInit {
       engineType: state.vehicle.engineType,
       transmission: state.vehicle.transmission,
     };
+
+    this.payload = payload;
 
     this.loading.set(true);
     this.api.diagnose(payload).subscribe({
@@ -201,6 +240,31 @@ export class DiagnosticoComponent implements OnInit {
         const msg = err?.error?.message ?? err?.message ?? 'Error desconocido al consultar el diagnóstico.';
         this.errorMessage.set(msg);
         this.loading.set(false);
+      },
+    });
+  }
+
+  aceptarDiagnostico(): void {
+    if (this.savingIssue() || this.payload == null || this.resultado() == null) {
+      return;
+    }
+
+    this.errorMessage.set(null);
+    this.successMessage.set(null);
+    this.savingIssue.set(true);
+    this.api.createIssue(this.payload).subscribe({
+      next: () => {
+        this.savingIssue.set(false);
+        this.successMessage.set('Diagnóstico guardado correctamente. Redirigiendo a talleres...');
+        setTimeout(() => {
+          this.router.navigate(['/taller']);
+        }, 900);
+      },
+      error: (err) => {
+        const msg = err?.error?.message ?? err?.message ?? 'No se pudo guardar el diagnóstico.';
+        this.errorMessage.set(msg);
+        this.successMessage.set(null);
+        this.savingIssue.set(false);
       },
     });
   }

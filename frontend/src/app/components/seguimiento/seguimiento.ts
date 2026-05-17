@@ -2,7 +2,6 @@ import { isPlatformBrowser } from '@angular/common';
 import { Component, inject, Inject, OnInit, PLATFORM_ID, ChangeDetectorRef } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { ChatApiService } from '../../services/chat-api.service';
-import { ChatRoomType } from '../../services/api.models';
 import { AuthStateService } from '../../services/auth-state.service';
 import { MechanicService } from '../../services/mechanic.service';
 
@@ -16,7 +15,6 @@ import { MechanicService } from '../../services/mechanic.service';
 
 export class SeguimientoComponent implements OnInit {
   private readonly mechanicService = inject(MechanicService);
-  private readonly roomType: ChatRoomType = 'SEGUIMIENTO';
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -96,7 +94,7 @@ loadTracking(): void {
 loadChatData(): void {
 
   this.chatApiService
-    .isUserOnline(this.roomType, this.participantId)
+    .isUserOnline(this.sessionUuid, this.participantId)
     .subscribe({
       next: (isOnline) => {
         this.userOnline = isOnline;
@@ -105,7 +103,7 @@ loadChatData(): void {
     });
 
   this.chatApiService
-    .unreadCount(this.roomType, this.sessionUuid)
+    .unreadCount(this.sessionUuid)
     .subscribe({
       next: (count) => {
         this.unreadCount = count;
