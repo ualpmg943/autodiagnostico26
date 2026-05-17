@@ -39,13 +39,13 @@ public class MechanicsDataInitializer implements CommandLineRunner {
         List<AppUser> mechanics = new ArrayList<>();
         for (int i = 1; i <= 4; i++) {
             String email = "mecanico" + i + "@taller.local";
-            AppUser mechanic = upsertUser(
+            upsertUser(
                     email,
                     mechanicName(i),
                     UserRole.TALLER,
                     "password123",
                     "https://api.dicebear.com/9.x/initials/svg?seed=M" + i + "&backgroundColor=1a6bbd");
-            mechanics.add(mechanic);
+            mechanics.add(userRepository.findByEmailIgnoreCase(email).orElseThrow());
         }
 
         initializeWorkshops(mechanics);
@@ -53,7 +53,7 @@ public class MechanicsDataInitializer implements CommandLineRunner {
         // Ensure 15 default clients exist (idempotent by email).
         for (int i = 1; i <= 15; i++) {
             String email = "cliente" + i + "@user.local";
-            AppUser client = upsertUser(
+            upsertUser(
                     email,
                     "Cliente " + i,
                     UserRole.USER,
@@ -64,7 +64,7 @@ public class MechanicsDataInitializer implements CommandLineRunner {
         log.info("Mechanics, workshops and clients initialization completed.");
     }
 
-    private AppUser upsertUser(String email, String fullName, UserRole role, String rawPassword, String avatarUrl) {
+    private void upsertUser(String email, String fullName, UserRole role, String rawPassword, String avatarUrl) {
         String normalizedEmail = email.toLowerCase(Locale.ROOT);
         AppUser user = userRepository.findByEmailIgnoreCase(normalizedEmail).orElseGet(AppUser::new);
         boolean isNew = user.getId() == null;
@@ -79,13 +79,11 @@ public class MechanicsDataInitializer implements CommandLineRunner {
             user.setCreatedAt(LocalDateTime.now());
             AppUser saved = userRepository.save(user);
             log.info("Created {}: {}", role, saved.getEmail());
-            return saved;
         }
 
         // Keep existing password for existing users.
         AppUser saved = userRepository.save(user);
         log.info("Updated {}: {}", role, saved.getEmail());
-        return saved;
     }
 
     private void initializeWorkshops(List<AppUser> mechanics) {
