@@ -1,7 +1,5 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { IntroducirVehiculo } from '../introducir-vehiculo/introducir-vehiculo';
 import { SeleccionaProblema, ProblemaSeleccion } from '../selecciona-problema/selecciona-problema';
 import { VehicleSearchContext, PersonalVehicleResponse } from '../../services/api.models';
@@ -15,10 +13,8 @@ import { PersonalVehicleApiService } from '../../services/personal-vehicle-api.s
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
-export class HomeComponent implements OnInit {
-  private readonly auth = inject(AuthStateService);
-  private readonly personalVehicleApi = inject(PersonalVehicleApiService);
-  private readonly route = inject(ActivatedRoute);
+export class HomeComponent {
+  private readonly router = inject(Router);
 
   vehicleContext: VehicleSearchContext | null = null;
   seleccion: ProblemaSeleccion = { problemas: [], descripcionLibre: '' };
@@ -78,8 +74,12 @@ export class HomeComponent implements OnInit {
   }
 
   onEnviar(): void {
-    // TODO: navegar a la pantalla de diagnóstico
-    console.log('Enviar', this.seleccion, this.vehicleContext);
+    this.router.navigate(['/diagnostico'], {
+      state: {
+        vehicle: this.vehicleContext,
+        problemas: this.seleccion,
+      },
+    });
   }
 
   displayName(v: PersonalVehicleResponse): string {
