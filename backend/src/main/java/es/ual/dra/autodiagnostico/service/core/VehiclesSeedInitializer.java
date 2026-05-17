@@ -16,8 +16,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 /**
  * Inicializador TEMPORAL que crea unos pocos vehículos de prueba en la BD si
  * está vacía, para poder probar el flujo de autodiagnóstico sin depender del
@@ -93,7 +91,6 @@ public class VehiclesSeedInitializer implements ApplicationRunner {
                 .transmission(transmission)
                 .engine(engine)
                 .personalVehicles(new java.util.ArrayList<>())
-                .products(List.of())
                 .build();
         vehicleModelRepository.save(vm);
     }
