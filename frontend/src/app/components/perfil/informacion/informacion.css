@@ -27,6 +27,7 @@
   right: 0;
   width: 32px;
   height: 32px;
+  padding: 0;
   border-radius: 50%;
   border: 2px solid var(--color-bg-white, #ffffff);
   background: var(--color-primary, #1a6bbd);
@@ -37,6 +38,7 @@
   justify-content: center;
   transition: background 150ms ease, transform 150ms ease;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  line-height: 0;
 }
 
 .info-avatar-btn:hover {
@@ -64,22 +66,26 @@
 
 .info-edit-btn {
   flex-shrink: 0;
-  min-width: 44px;
   width: 44px;
   height: 44px;
+  padding: 0;
+  margin-left: auto;
   border-radius: 50%;
   border: 2px solid var(--color-primary, #1a6bbd);
   background: var(--color-bg-white, #ffffff);
+  color: var(--color-primary, #1a6bbd);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 180ms ease;
   box-shadow: 0 2px 8px rgba(26, 107, 189, 0.2);
+  line-height: 0;
 }
 
 .info-edit-btn:hover {
   background: var(--color-primary, #1a6bbd);
+  color: #ffffff;
   box-shadow: 0 4px 14px rgba(26, 107, 189, 0.35);
   transform: translateY(-2px);
 }
@@ -91,8 +97,8 @@
 
 .info-edit-btn svg {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .info-details {
