@@ -1,6 +1,7 @@
 package es.ual.dra.autodiagnostico.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import es.ual.dra.autodiagnostico.dto.MechanicClientDTO;
+import es.ual.dra.autodiagnostico.dto.autodiagnosis.DiagnosedPartDTO;
 import es.ual.dra.autodiagnostico.dto.RepairVehicleMockDTO;
 import es.ual.dra.autodiagnostico.dto.WorkshopDTO;
 import es.ual.dra.autodiagnostico.dto.WorkshopSelectionRequestDTO;
@@ -69,35 +71,26 @@ public class WorkshopService {
 
         AppUser mechanic = getMechanic(workshop);
 
-        Issue existing = issueRepository
-                .findByWorkshopMechanicIdAndPersonalVehicleOwnerIdAndActiveTrue(mechanic.getId(), client.getId())
-                .orElse(null);
+        Issue issue = issueRepository
+            .findFirstByPersonalVehicleOwnerIdAndPersonalVehicleIdAndStatusAndActiveTrueOrderByCreatedAtDesc(
+                client.getId(),
+                personalVehicle.getId(),
+                IssueStatus.DRAFT)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "No existe un diagnostico previo para este vehiculo"));
 
-        Issue issue;
-        if (existing != null) {
-            issue = existing;
-        } else {
-            long activeIssues = issueRepository.countByWorkshopMechanicIdAndActiveTrue(mechanic.getId());
-            if (activeIssues >= workshop.getVehicleLimit()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "El taller ha alcanzado su capacidad maxima");
-            }
-
-            for (Issue current : issueRepository.findByPersonalVehicleOwnerIdAndActiveTrue(client.getId())) {
-                current.setActive(false);
-            }
-
-            issue = Issue.builder()
-                    .personalVehicle(personalVehicle)
-                    .workshop(workshop)
-                    .description(request.getDescription() == null ? "Seleccion de taller por el cliente"
-                            : request.getDescription())
-                    .status(IssueStatus.WORKSHOP_ASSIGNED)
-                    .progressColor("amarillo")
-                    .latestUpdate("Taller seleccionado. Pendiente de primera revision del mecanico.")
-                    .active(true)
-                    .build();
-            issue = issueRepository.save(issue);
+        long activeIssues = issueRepository.countByWorkshopMechanicIdAndActiveTrue(mechanic.getId());
+        if (activeIssues >= workshop.getVehicleLimit()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El taller ha alcanzado su capacidad maxima");
         }
+
+        issue.setWorkshop(workshop);
+        issue.setSessionUuid(UUID.randomUUID().toString());
+        issue.setStatus(IssueStatus.WORKSHOP_ASSIGNED);
+        issue.setProgressColor("amarillo");
+        issue.setLatestUpdate("Taller seleccionado. Pendiente de primera revision del mecanico.");
+        issue.setActive(true);
+        issue = issueRepository.save(issue);
 
         return WorkshopSelectionResponseDTO.builder()
                 .workshop(toDto(workshop, client.getId()))
@@ -175,12 +168,39 @@ public class WorkshopService {
                 .clientName(client.getFullName())
                 .clientEmail(client.getEmail())
                 .clientAvatar(client.getAvatarUrl())
-                .carInfo(null)
+                .carInfo(buildCarInfo(issue))
                 .problemDescription(issue.getDescription())
+                .aiDiagnosis(issue.getAiDiagnosis())
+                .recommendedParts(deserializeRecommendedParts(issue.getRecommendedParts()))
+                .estimatedPrice(issue.getEstimatedPrice())
                 .status(issue.getProgressColor())
                 .latestUpdate(issue.getLatestUpdate())
                 .sessionUuid(issue.getSessionUuid())
                 .issueId(issue.getId())
                 .build();
+    }
+
+    private String buildCarInfo(Issue issue) {
+        if (issue.getPersonalVehicle() == null || issue.getPersonalVehicle().getVehicleModel() == null) {
+            return null;
+        }
+        var model = issue.getPersonalVehicle().getVehicleModel();
+        String brand = model.getVehicle() == null ? "" : model.getVehicle().getBrand();
+        String name = model.getVehicle() == null ? "" : model.getVehicle().getName();
+        return (brand + " " + name + " " + model.getModelName()).trim();
+    }
+
+    private List<DiagnosedPartDTO> deserializeRecommendedParts(String recommendedParts) {
+        if (recommendedParts == null || recommendedParts.isBlank()) {
+            return List.of();
+        }
+        try {
+            return new com.fasterxml.jackson.databind.ObjectMapper().readValue(
+                    recommendedParts,
+                    new com.fasterxml.jackson.core.type.TypeReference<List<DiagnosedPartDTO>>() {
+                    });
+        } catch (Exception ex) {
+            return List.of();
+        }
     }
 }

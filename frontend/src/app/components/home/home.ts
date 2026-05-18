@@ -27,6 +27,8 @@ export class HomeComponent {
   personalVehicles: PersonalVehicleResponse[] = [];
   selectedPersonalVehicleId: number | null = null;
   prefillContext: VehicleSearchContext | null = null;
+  submitError = '';
+  private creatingVehicle = false;
 
   get tieneProblema(): boolean {
     return this.seleccion.problemas.length > 0 || !!this.seleccion.descripcionLibre.trim();
@@ -53,6 +55,18 @@ export class HomeComponent {
         this.personalVehicles = vehicles;
         if (preselectId && vehicles.some(v => v.id === preselectId)) {
           this.applyPersonalVehicle(preselectId);
+          return;
+        }
+
+        const storedIdRaw = localStorage.getItem('selectedPersonalVehicleId');
+        const storedId = storedIdRaw ? Number(storedIdRaw) : null;
+        if (storedId && vehicles.some(v => v.id === storedId)) {
+          this.applyPersonalVehicle(storedId);
+          return;
+        }
+
+        if (vehicles.length === 1) {
+          this.applyPersonalVehicle(vehicles[0].id);
         }
       },
       error: () => {
@@ -62,27 +76,85 @@ export class HomeComponent {
   }
 
   onPersonalVehicleSelect(id: number | null): void {
+    this.submitError = '';
     this.selectedPersonalVehicleId = id;
     if (id === null) {
       this.prefillContext = null;
+      localStorage.removeItem('selectedPersonalVehicleId');
       return;
     }
     this.applyPersonalVehicle(id);
   }
 
   onVehicleContextChange(ctx: VehicleSearchContext): void {
+    this.submitError = '';
     this.vehicleContext = ctx;
   }
 
   onProblemaChange(seleccion: ProblemaSeleccion): void {
+    this.submitError = '';
     this.seleccion = seleccion;
   }
 
   onEnviar(): void {
+    if (this.creatingVehicle) {
+      return;
+    }
+
+    const clientId = this.auth.userId();
+    if (clientId === null) {
+      this.submitError = 'Debes iniciar sesión para enviar el diagnóstico.';
+      return;
+    }
+
+    if (this.selectedPersonalVehicleId !== null) {
+      this.submitError = '';
+      this.navigateToDiagnostico(clientId, this.selectedPersonalVehicleId);
+      return;
+    }
+
+    if (this.personalVehicles.length > 0) {
+      this.submitError = 'Selecciona uno de tus coches guardados para continuar.';
+      return;
+    }
+
+    const vehicleModelId = this.vehicleContext?.variantId ?? this.vehicleContext?.modelId;
+    if (vehicleModelId === null || vehicleModelId === undefined) {
+      this.submitError = 'Indica al menos marca y modelo del coche para guardarlo automáticamente.';
+      return;
+    }
+
+    this.submitError = '';
+    this.creatingVehicle = true;
+
+    this.personalVehicleApi.create({
+      ownerId: clientId,
+      vehicleModelId,
+      plate: null,
+      vin: null,
+      buildDate: null,
+    }).subscribe({
+      next: (created: PersonalVehicleResponse) => {
+        this.personalVehicles = [created, ...this.personalVehicles];
+        this.selectedPersonalVehicleId = created.id;
+        localStorage.setItem('selectedPersonalVehicleId', String(created.id));
+        this.creatingVehicle = false;
+        this.navigateToDiagnostico(clientId, created.id);
+      },
+      error: () => {
+        this.creatingVehicle = false;
+        this.submitError = 'No se pudo guardar tu coche automáticamente. Revísalo en Mis Vehículos e inténtalo de nuevo.';
+      },
+    });
+  }
+
+  private navigateToDiagnostico(clientId: number, personalVehicleId: number): void {
     this.router.navigate(['/diagnostico'], {
       state: {
         vehicle: this.vehicleContext,
         problemas: this.seleccion,
+        clientId,
+        personalVehicleId,
       },
     });
   }
@@ -96,6 +168,7 @@ export class HomeComponent {
     const vehicle = this.personalVehicles.find(v => v.id === id);
     if (!vehicle) return;
     this.selectedPersonalVehicleId = id;
+    localStorage.setItem('selectedPersonalVehicleId', String(id));
     this.prefillContext = {
       brand: vehicle.brand,
       modelId: null,

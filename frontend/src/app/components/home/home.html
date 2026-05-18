@@ -1,4 +1,8 @@
 <section class="home-page">
+  @if (submitError) {
+    <p class="home-submit-error">{{ submitError }}</p>
+  }
+
   <app-selecciona-problema (problemaChange)="onProblemaChange($event)" />
 
   @if (isLoggedIn && personalVehicles.length > 0) {

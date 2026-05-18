@@ -47,6 +47,14 @@ public class ChatMessage {
     @Enumerated(EnumType.STRING)
     @Column(name = "sender_role", nullable = false, length = 20)
     private ChatSenderRole senderRole;
+    
+  /**
+     * UUID de la sesión/asignación
+     * Para USUARIO: su propio UUID
+     * Para TALLER: el UUID de la asignación con este cliente
+     */
+    @Column(name = "session_uuid", nullable = false, length = 36)
+    private String sessionUuid;
 
     @Column(name = "comment_text", nullable = false, length = 6000)
     private String commentText;

@@ -16,4 +16,11 @@ export class AutodiagnosisApiService {
       payload,
     );
   }
+
+  createIssue(payload: AutodiagnosisRequest): Observable<AutodiagnosisResponse> {
+    return this.http.post<AutodiagnosisResponse>(
+      `${this.base}/issues`,
+      payload,
+    );
+  }
 }

@@ -21,8 +21,11 @@ export class WorkshopService {
     return this.http.get<Workshop>(`${this.baseUrl}/${workshopId}${query}`);
   }
 
-  selectWorkshop(workshopId: number, clientId: number): Observable<WorkshopSelectionResponse> {
-    return this.http.post<WorkshopSelectionResponse>(`${this.baseUrl}/${workshopId}/select`, { clientId });
+  selectWorkshop(workshopId: number, clientId: number, personalVehicleId: number): Observable<WorkshopSelectionResponse> {
+    return this.http.post<WorkshopSelectionResponse>(`${this.baseUrl}/${workshopId}/select`, {
+      clientId,
+      personalVehicleId,
+    });
   }
 
   getNearbyWorkshops(

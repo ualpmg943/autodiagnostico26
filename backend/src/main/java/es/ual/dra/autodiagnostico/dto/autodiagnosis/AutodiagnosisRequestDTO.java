@@ -7,6 +7,8 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record AutodiagnosisRequestDTO(
+        Long clientId,
+        Long personalVehicleId,
         @NotNull Long vehicleModelId,
         @Size(min = 1, max = 20) List<@NotBlank String> symptoms,
         @Size(max = 2000) String freeText,

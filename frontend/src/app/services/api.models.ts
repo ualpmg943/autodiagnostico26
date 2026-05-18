@@ -90,6 +90,9 @@ export interface MechanicClientTracking {
   clientAvatar: string;
   carInfo: string;
   problemDescription: string;
+  aiDiagnosis: string;
+  recommendedParts: DiagnosedPart[];
+  estimatedPrice: number | null;
   status: string;
   latestUpdate?: string;
   sessionUuid: string;
@@ -128,6 +131,8 @@ export interface VehicleSearchContext {
 // ── Autodiagnóstico (IA) ───────────────────────────────────────────────────
 
 export interface AutodiagnosisRequest {
+  clientId: number;
+  personalVehicleId: number;
   vehicleModelId: number;
   symptoms: string[];
   freeText: string;

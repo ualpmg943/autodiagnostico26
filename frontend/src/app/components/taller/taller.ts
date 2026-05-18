@@ -44,6 +44,16 @@ export class TallerComponent implements OnInit {
   readonly error = signal('');
   readonly userId = computed(() => this.authState.userId());
 
+  private getSelectedPersonalVehicleId(): number | null {
+    const stored = localStorage.getItem('selectedPersonalVehicleId');
+    if (!stored) {
+      return null;
+    }
+
+    const parsed = Number(stored);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  }
+
   ngOnInit(): void {
     this.loadWorkshops();
   }
@@ -78,6 +88,12 @@ export class TallerComponent implements OnInit {
       return;
     }
 
+    const personalVehicleId = this.getSelectedPersonalVehicleId();
+    if (!personalVehicleId) {
+      this.error.set('Selecciona un vehiculo antes de elegir un taller.');
+      return;
+    }
+
     if (workshop.selectedByClient && workshop.sessionUuid) {
       this.goToTracking(workshop.sessionUuid);
       return;
@@ -86,7 +102,7 @@ export class TallerComponent implements OnInit {
     this.selecting.set(true);
     this.error.set('');
 
-    this.workshopService.selectWorkshop(workshop.id, clientId).subscribe({
+    this.workshopService.selectWorkshop(workshop.id, clientId, personalVehicleId).subscribe({
       next: (response) => {
         localStorage.setItem('trackingSessionUuid', response.tracking.sessionUuid);
         this.selecting.set(false);

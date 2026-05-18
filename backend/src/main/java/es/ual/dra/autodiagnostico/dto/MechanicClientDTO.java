@@ -1,5 +1,9 @@
 package es.ual.dra.autodiagnostico.dto;
 
+import java.math.BigDecimal;
+import java.util.List;
+
+import es.ual.dra.autodiagnostico.dto.autodiagnosis.DiagnosedPartDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -24,6 +28,12 @@ public class MechanicClientDTO {
     private String carInfo;
 
     private String problemDescription;
+
+    private String aiDiagnosis;
+
+    private List<DiagnosedPartDTO> recommendedParts;
+
+    private BigDecimal estimatedPrice;
 
     private String status;
 
