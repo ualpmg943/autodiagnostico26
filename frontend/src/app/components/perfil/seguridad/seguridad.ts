@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthStateService } from '../../../services/auth-state.service';
 import { UserApiService } from '../../../services/user-api.service';
@@ -13,8 +13,8 @@ import { UserApiService } from '../../../services/user-api.service';
 export class PerfilSeguridadComponent {
   private readonly authStateService = inject(AuthStateService);
   private readonly userApiService = inject(UserApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
-  email = this.authStateService.email();
   newEmail = '';
   currentPassword = '';
   newPassword = '';
@@ -26,7 +26,7 @@ export class PerfilSeguridadComponent {
   passwordSuccess = '';
 
   get emailLabel(): string {
-    return this.email || 'No disponible';
+    return this.authStateService.email() || 'No disponible';
   }
 
   updateEmail(): void {
@@ -41,19 +41,22 @@ export class PerfilSeguridadComponent {
       return;
     }
 
-    this.userApiService.updateProfile(userId, { email: this.newEmail.trim() }).subscribe({
+    const newEmailValue = this.newEmail.trim();
+    this.newEmail = '';
+
+    this.userApiService.updateProfile(userId, { email: newEmailValue }).subscribe({
       next: (updated) => {
-        this.email = updated.email;
-        this.newEmail = '';
         this.emailSuccess = 'Correo electrónico actualizado correctamente.';
         this.authStateService.setSession({ email: updated.email });
+        this.cdr.markForCheck();
       },
       error: (err) => {
         if (err?.status === 409) {
-          this.emailError = 'Ya existe una cuenta con ese correo.';
+          this.emailError = 'Ya existe una cuenta con ese correo electrónico.';
         } else {
-          this.emailError = 'No se pudo actualizar el correo.';
+          this.emailError = 'No se pudo actualizar el correo electrónico. Inténtalo de nuevo más tarde.';
         }
+        this.cdr.markForCheck();
       }
     });
   }
@@ -80,18 +83,23 @@ export class PerfilSeguridadComponent {
       return;
     }
 
+    const currentPassValue = this.currentPassword;
+    const newPassValue = this.newPassword;
+    this.currentPassword = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
+
     this.userApiService.updatePassword(userId, {
-      currentPassword: this.currentPassword,
-      newPassword: this.newPassword
+      currentPassword: currentPassValue,
+      newPassword: newPassValue
     }).subscribe({
       next: () => {
         this.passwordSuccess = 'Contraseña actualizada correctamente.';
-        this.currentPassword = '';
-        this.newPassword = '';
-        this.confirmPassword = '';
+        this.cdr.markForCheck();
       },
       error: () => {
         this.passwordError = 'La contraseña actual no es correcta.';
+        this.cdr.markForCheck();
       }
     });
   }
