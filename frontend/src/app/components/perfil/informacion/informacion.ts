@@ -114,6 +114,11 @@ export class PerfilInformacionComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
+    if (this.editPostalCode && !/^\d{5}$/.test(this.editPostalCode)) {
+      this.errorMessage = 'El código postal debe tener exactamente 5 dígitos.';
+      return;
+    }
+
     const payload: Record<string, string> = {};
     if (this.editFullName) payload['fullName'] = this.editFullName;
     payload['city'] = this.editCity;

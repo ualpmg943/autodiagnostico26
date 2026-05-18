@@ -25,6 +25,6 @@ public class UpdateUserRequestDTO {
     @Size(max = 150, message = "La ciudad excede el tamano permitido")
     private String city;
 
-    @Size(max = 10, message = "El codigo postal excede el tamano permitido")
+    @Pattern(regexp = "^\\d{5}$|^$", message = "El codigo postal debe tener exactamente 5 digitos")
     private String postalCode;
 }
