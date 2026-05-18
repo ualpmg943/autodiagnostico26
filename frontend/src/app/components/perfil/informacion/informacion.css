@@ -15,10 +15,13 @@
 }
 
 .info-avatar {
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   object-fit: cover;
   display: block;
   border: 3px solid var(--color-primary, #1a6bbd);
+  flex-shrink: 0;
 }
 
 .info-avatar-btn {
