@@ -1,4 +1,4 @@
-package es.ual.dra.autodiagnostico.service;
+package es.ual.dra.autodiagnostico.service.user;
 
 import es.ual.dra.autodiagnostico.dto.AuthUserResponseDTO;
 import es.ual.dra.autodiagnostico.dto.UpdatePasswordRequestDTO;

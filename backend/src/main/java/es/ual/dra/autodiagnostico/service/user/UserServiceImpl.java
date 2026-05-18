@@ -1,4 +1,4 @@
-package es.ual.dra.autodiagnostico.service;
+package es.ual.dra.autodiagnostico.service.user;
 
 import java.util.Locale;
 

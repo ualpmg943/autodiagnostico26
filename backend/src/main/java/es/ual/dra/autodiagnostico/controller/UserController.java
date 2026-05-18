@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import es.ual.dra.autodiagnostico.dto.AuthUserResponseDTO;
 import es.ual.dra.autodiagnostico.dto.UpdatePasswordRequestDTO;
 import es.ual.dra.autodiagnostico.dto.UpdateUserRequestDTO;
-import es.ual.dra.autodiagnostico.service.UserService;
+import es.ual.dra.autodiagnostico.service.user.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
