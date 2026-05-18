@@ -33,8 +33,7 @@ public class AppUser {
     @Column(nullable = false, length = 20)
     private UserRole role;
 
-    @Lob
-    @Column(name = "avatar_url", nullable = false)
+    @Column(name = "avatar_url", nullable = false, columnDefinition = "MEDIUMTEXT")
     private String avatarUrl;
 
     @Column(name = "created_at", nullable = false)
